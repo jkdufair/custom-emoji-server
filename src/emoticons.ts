@@ -16,29 +16,28 @@ emoticonRouter.use((req, res, next) => {
   next();
 });
 
-emoticonRouter.post('/emoticon/:emoticon',
-										bodyParser.raw({
-											limit: '1mb',
-											type: 'image/*'
-										}), async (req, res) => {
-											const data: Buffer = req.body;
-											const hexData = data.toString('base64');
-											const split = req.params.emoticon.split('.')
-											const emojiName = split[0]
-											let emojiExtension = split[1]
-											try {
-												const client = await createClient();
-												const emojiIfExists = await client.get(emojiName);
-												if (emojiIfExists) {
-													res.status(400).send('emoji already exists');
-													return;
-												}
-												await client.hmset(emojiName, ['extension', emojiExtension], ['data', hexData]);
-												res.status(200).send('successfully inserted emoji ' + emojiName);
-											} catch (err) {
-												res.status(500).send('Error ' + err);
-											}
-										});
+emoticonRouter.post('/emoticon/:emoticon', bodyParser.raw({
+	limit: '1mb',
+	type: 'image/*'
+}), async (req, res) => {
+	const data: Buffer = req.body;
+	const hexData = data.toString('base64');
+	const split = req.params.emoticon.split('.')
+	const emojiName = split[0]
+	let emojiExtension = split[1]
+	try {
+		const client = await createClient();
+		const emoji = await client.get(emojiName);
+		if (emoji) {
+			res.status(400).send('emoji already exists');
+			return;
+		}
+		await client.hmset(emojiName, ['extension', emojiExtension], ['data', hexData]);
+		res.status(200).send('successfully inserted emoji ' + emojiName);
+	} catch (err) {
+		res.status(500).send('Error ' + err);
+	}
+});
 
 emoticonRouter.delete('/emoticon/:emoticon', async (req, res) => {
   const emojiName = req.params.emoticon;
