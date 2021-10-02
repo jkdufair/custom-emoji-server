@@ -6,24 +6,24 @@
 	},
 	"item": [
 		{
-			"name": "/emoticons",
+			"name": "/emojis",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{server}}/emoticons",
+					"raw": "{{server}}/emojis",
 					"host": [
 						"{{server}}"
 					],
 					"path": [
-						"emoticons"
+						"emojis"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "/emoticon/:emoticon",
+			"name": "/emoji/:emoji",
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -34,12 +34,12 @@
 					}
 				},
 				"url": {
-					"raw": "{{server}}/emoticon/2020_intensifies.gif",
+					"raw": "{{server}}/emoji/2020_intensifies.gif",
 					"host": [
 						"{{server}}"
 					],
 					"path": [
-						"emoticon",
+						"emoji",
 						"2020_intensifies.gif"
 					]
 				}
@@ -70,17 +70,17 @@
 			"response": []
 		},
 		{
-			"name": "/emoticon/:emoticon",
+			"name": "/emoji/:emoji",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{server}}/emoticon/marge",
+					"raw": "{{server}}/emoji/marge",
 					"host": [
 						"{{server}}"
 					],
 					"path": [
-						"emoticon",
+						"emoji",
 						"marge"
 					]
 				}
@@ -88,34 +88,34 @@
 			"response": []
 		},
 		{
-			"name": "/emoticon/:emoticon-blobs",
+			"name": "/emoji-blobs",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{server}}/emoticon-blobs",
+					"raw": "{{server}}/emoji-blobs",
 					"host": [
 						"{{server}}"
 					],
 					"path": [
-						"emoticon-blobs"
+						"emoji-blobs"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "/emoticon/:emoticon",
+			"name": "/emoji/:emoji",
 			"request": {
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "{{server}}/emoticon/2020_intensifies",
+					"raw": "{{server}}/emoji/2020_intensifies",
 					"host": [
 						"{{server}}"
 					],
 					"path": [
-						"emoticon",
+						"emoji",
 						"2020_intensifies"
 					]
 				}
