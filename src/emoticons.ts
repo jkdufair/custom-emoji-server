@@ -4,7 +4,7 @@ import { createNodeRedisClient as createClient } from 'handy-redis';
 
 export const emoticonRouter = express.Router();
 
-const connectionOptions = !process.env.REDIS_CONNECTION_STRING ? null : {'url': process.env.REDIS_CONNECTION_STRING}
+const connectionOptions = !process.env.REDIS_CONNECTION_STRING ? {} : {'url': process.env.REDIS_CONNECTION_STRING}
 
 emoticonRouter.use((req, res, next) => {
   const origin = res.get('origin') || 'https://teams.microsoft.com';
