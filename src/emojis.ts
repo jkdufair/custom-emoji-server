@@ -84,14 +84,14 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 	let imageData;
 	let hash: Record<string, string>;
 	try {
-		const cachedHash: Record<string, string> = nodeCache.get(emojiName);
-		if (cachedHash) {
-			hash = cachedHash;
-		}
+		// const cachedHash: Record<string, string> = nodeCache.get(emojiName);
+		// if (cachedHash) {
+		// 	hash = cachedHash;
+		// }
 		else {
 			const redisClient = createRedisClient(redisConnectionOptions);
 			hash = await redisClient.hgetall(emojiName);
-			nodeCache.set(emojiName, hash);
+			//nodeCache.set(emojiName, hash);
 			if (!hash) {
 				res.status(404).send('not found');
 				return;
