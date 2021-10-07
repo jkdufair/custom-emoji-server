@@ -82,9 +82,9 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 
 	let extension;
 	let imageData;
-	let hash;
+	let hash: Record<string, string>;
 	try {
-		const cachedHash = nodeCache.get(emojiName);
+		const cachedHash: Record<string, string> = nodeCache.get(emojiName);
 		if (cachedHash) {
 			hash = cachedHash;
 		}
@@ -96,14 +96,15 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 				res.status(404).send('not found');
 				return;
 			}
-			extension = hash["extension"];
-			if (extension === 'jpg') extension = 'jpeg';
 		}
 	} catch (err) {
 		res.status(500).send('Error ' + err);
 		return;
 	}
-	imageData = hash["data"];
+
+	extension = hash["extension"];
+	if (extension === 'jpg') extension = 'jpeg';
+	imageData = hash.data;
 
 	res.set('Content-Type', `image/${extension}`);
 	// not sure about this algorithm - 15 ± 1 day???
