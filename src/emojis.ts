@@ -82,8 +82,6 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 	try {
 		const emojiName = req.params.emoji;
 
-		let extension;
-		let imageData;
 		let hash: Record<string, string>;
 		const cachedHash: Record<string, string> = nodeCache.get(emojiName);
 		if (cachedHash) {
@@ -96,12 +94,11 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 				return;
 			}
 			nodeCache.set(emojiName, hash);
-			redisClient.quit();
 		}
 
-		extension = hash["extension"];
+		let extension = hash["extension"];
 		if (extension === 'jpg') extension = 'jpeg';
-		imageData = hash.data;
+		const imageData = hash.data;
 
 		res.set('Content-Type', `image/${extension}`);
 		// not sure about this algorithm - 15 ± 1 day???
