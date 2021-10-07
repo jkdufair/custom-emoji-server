@@ -1,15 +1,16 @@
+// TODO handle exceptions in middleware
 import * as bodyParser from 'body-parser';
 import express from 'express';
 import { createNodeRedisClient as createRedisClient } from 'handy-redis';
 import { BlobServiceClient } from '@azure/storage-blob';
-//import NodeCache from 'node-cache';
+import NodeCache from 'node-cache';
 
 export const emojiRouter = express.Router();
 const redisConnectionOptions = !process.env.REDIS_CONNECTION_STRING ? {} : { 'url': process.env.REDIS_CONNECTION_STRING };
 const azureStorageConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const blobServiceClient = BlobServiceClient.fromConnectionString(azureStorageConnectionString);
 const containerClient = blobServiceClient.getContainerClient('emojis');
-//const nodeCache = new NodeCache();
+const nodeCache = new NodeCache();
 
 emojiRouter.use((_, res, next) => {
 	const origin = res.get('origin') || 'https://teams.microsoft.com';
@@ -27,17 +28,17 @@ emojiRouter.post('/emoji/:emoji', bodyParser.raw({
 	limit: '1mb',
 	type: 'image/*'
 }), async (req, res) => {
-	const data: Buffer = req.body;
-	const hexData = data.toString('hex');
-	const filename = req.params.emoji;
-	const {name, extension} = nameParts(filename);
-
-	if (!name || !extension) {
-		res.status(500).send('Name and extension required');
-		return;
-	}
-
 	try {
+		const data: Buffer = req.body;
+		const hexData = data.toString('hex');
+		const filename = req.params.emoji;
+		const { name, extension } = nameParts(filename);
+
+		if (!name || !extension) {
+			res.status(500).send('Name and extension required');
+			return;
+		}
+
 		const redisClient = createRedisClient(redisConnectionOptions);
 		const emoji = await redisClient.get(name);
 		if (emoji) {
@@ -58,8 +59,9 @@ emojiRouter.post('/emoji/:emoji', bodyParser.raw({
 });
 
 emojiRouter.delete('/emoji/:emoji', async (req, res) => {
-	const emojiName = req.params.emoji;
 	try {
+		const emojiName = req.params.emoji;
+
 		// Get the hash from redis so we have the file extension
 		const redisClient = createRedisClient(redisConnectionOptions);
 		const hash = await redisClient.hgetall(emojiName);
@@ -78,39 +80,38 @@ emojiRouter.delete('/emoji/:emoji', async (req, res) => {
 });
 
 emojiRouter.get('/emoji/:emoji', async (req, res) => {
-	const emojiName = req.params.emoji;
-
-	let extension;
-	let imageData;
-	let hash: Record<string, string>;
 	try {
-		// const cachedHash: Record<string, string> = nodeCache.get(emojiName);
-		// if (cachedHash) {
-		// 	hash = cachedHash;
-		// }
-		//else {
+		const emojiName = req.params.emoji;
+
+		let extension;
+		let imageData;
+		let hash: Record<string, string>;
+		const cachedHash: Record<string, string> = nodeCache.get(emojiName);
+		if (cachedHash) {
+			hash = cachedHash;
+		}
+		else {
 			const redisClient = createRedisClient(redisConnectionOptions);
 			hash = await redisClient.hgetall(emojiName);
-			//nodeCache.set(emojiName, hash);
+			nodeCache.set(emojiName, hash);
 			if (!hash) {
 				res.status(404).send('not found');
 				return;
 			}
-		//}
+		}
+		extension = hash["extension"];
+		if (extension === 'jpg') extension = 'jpeg';
+		imageData = hash.data;
+
+		res.set('Content-Type', `image/${extension}`);
+		// not sure about this algorithm - 15 ± 1 day???
+		const maxAge = Math.round(60 * 60 * 24 * (15 + (Math.random() * 2 - 1)));
+		res.header('Cache-Control', `public, max-age=${maxAge}`);
+		res.send(Buffer.from(imageData, 'hex'));
 	} catch (err) {
 		res.status(500).send('Error ' + err);
 		return;
 	}
-
-	extension = hash["extension"];
-	if (extension === 'jpg') extension = 'jpeg';
-	imageData = hash.data;
-
-	res.set('Content-Type', `image/${extension}`);
-	// not sure about this algorithm - 15 ± 1 day???
-	const maxAge = Math.round(60 * 60 * 24 * (15 + (Math.random() * 2 - 1)));
-	res.header('Cache-Control', `public, max-age=${maxAge}`);
-	res.send(Buffer.from(imageData, 'hex'));
 });
 
 emojiRouter.get('/emojis', async (_, res) => {
@@ -146,6 +147,7 @@ async function streamToBuffer(readableStream: NodeJS.ReadableStream) {
 }
 
 emojiRouter.post('/init', async (_, res) => {
+	try {
 	const redisClient = createRedisClient(redisConnectionOptions);
 	// Sentinel emoji - if it's there, we are assuming they're all there
 	const hash = await redisClient.hgetall('slackbot');
@@ -171,5 +173,9 @@ emojiRouter.post('/init', async (_, res) => {
 		res.status(201).send(createdBlobs);
 	} else {
 		res.sendStatus(304);
+	}		
+	} catch (err) {
+		res.status(500).send('Error ' + err)
 	}
+
 })
