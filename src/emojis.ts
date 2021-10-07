@@ -32,6 +32,11 @@ emojiRouter.post('/emoji/:emoji', bodyParser.raw({
 	const filename = req.params.emoji;
 	const {name, extension} = nameParts(filename);
 
+	if (!name || !extension) {
+		res.status(500).send('Name and extension required');
+		return;
+	}
+
 	try {
 		const redisClient = createRedisClient(redisConnectionOptions);
 		const emoji = await redisClient.get(name);
@@ -150,6 +155,8 @@ emojiRouter.post('/init', async (_, res) => {
 				await streamToBuffer(downloadBlockBlobResponse.readableStreamBody)
 			).toString('hex');
 
+			console.log('/init loading: ', blob.name)
+			
 			await redisClient.hmset(name, ['extension', extension], ['data', hexData]);
 		}
 		res.status(201).send(createdBlobs);
