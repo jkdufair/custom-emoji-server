@@ -2,14 +2,14 @@ import * as bodyParser from 'body-parser';
 import express from 'express';
 import { createNodeRedisClient as createRedisClient } from 'handy-redis';
 import { BlobServiceClient } from '@azure/storage-blob';
-import NodeCache from 'node-cache';
+//import NodeCache from 'node-cache';
 
 export const emojiRouter = express.Router();
 const redisConnectionOptions = !process.env.REDIS_CONNECTION_STRING ? {} : { 'url': process.env.REDIS_CONNECTION_STRING };
 const azureStorageConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const blobServiceClient = BlobServiceClient.fromConnectionString(azureStorageConnectionString);
 const containerClient = blobServiceClient.getContainerClient('emojis');
-const nodeCache = new NodeCache();
+//const nodeCache = new NodeCache();
 
 emojiRouter.use((_, res, next) => {
 	const origin = res.get('origin') || 'https://teams.microsoft.com';
@@ -88,7 +88,7 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 		// if (cachedHash) {
 		// 	hash = cachedHash;
 		// }
-		else {
+		//else {
 			const redisClient = createRedisClient(redisConnectionOptions);
 			hash = await redisClient.hgetall(emojiName);
 			//nodeCache.set(emojiName, hash);
@@ -96,7 +96,7 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 				res.status(404).send('not found');
 				return;
 			}
-		}
+		//}
 	} catch (err) {
 		res.status(500).send('Error ' + err);
 		return;
