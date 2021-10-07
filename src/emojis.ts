@@ -2,14 +2,14 @@ import * as bodyParser from 'body-parser';
 import express from 'express';
 import { createNodeRedisClient as createRedisClient } from 'handy-redis';
 import { BlobServiceClient } from '@azure/storage-blob';
+import NodeCache from 'node-cache';
 
 export const emojiRouter = express.Router();
-
 const redisConnectionOptions = !process.env.REDIS_CONNECTION_STRING ? {} : { 'url': process.env.REDIS_CONNECTION_STRING };
-
 const azureStorageConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const blobServiceClient = BlobServiceClient.fromConnectionString(azureStorageConnectionString);
 const containerClient = blobServiceClient.getContainerClient('emojis');
+const nodeCache = new NodeCache();
 
 emojiRouter.use((_, res, next) => {
 	const origin = res.get('origin') || 'https://teams.microsoft.com';
@@ -82,20 +82,28 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 
 	let extension;
 	let imageData;
+	let hash;
 	try {
-		const redisClient = createRedisClient(redisConnectionOptions);
-		const hash = await redisClient.hgetall(emojiName);
-		if (!hash) {
-			res.status(404).send('not found');
-			return;
+		const cachedHash = nodeCache.get(emojiName);
+		if (cachedHash) {
+			hash = cachedHash;
 		}
-		extension = hash["extension"];
-		if (extension === 'jpg') extension = 'jpeg';
-		imageData = hash["data"];
+		else {
+			const redisClient = createRedisClient(redisConnectionOptions);
+			hash = await redisClient.hgetall(emojiName);
+			nodeCache.set(emojiName, hash);
+			if (!hash) {
+				res.status(404).send('not found');
+				return;
+			}
+			extension = hash["extension"];
+			if (extension === 'jpg') extension = 'jpeg';
+		}
 	} catch (err) {
 		res.status(500).send('Error ' + err);
 		return;
 	}
+	imageData = hash["data"];
 
 	res.set('Content-Type', `image/${extension}`);
 	// not sure about this algorithm - 15 ± 1 day???
