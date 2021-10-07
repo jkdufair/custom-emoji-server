@@ -11,6 +11,7 @@ const azureStorageConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING
 const blobServiceClient = BlobServiceClient.fromConnectionString(azureStorageConnectionString);
 const containerClient = blobServiceClient.getContainerClient('emojis');
 const nodeCache = new NodeCache();
+const redisClient = createRedisClient(redisConnectionOptions);
 
 emojiRouter.use((_, res, next) => {
 	const origin = res.get('origin') || 'https://teams.microsoft.com';
@@ -21,7 +22,7 @@ emojiRouter.use((_, res, next) => {
 
 const nameParts = (emojiFilename: string) => {
 	const split = emojiFilename.split('.');
-	return {name: split[0], extension: split[1]};
+	return { name: split[0], extension: split[1] };
 }
 
 emojiRouter.post('/emoji/:emoji', bodyParser.raw({
@@ -39,7 +40,6 @@ emojiRouter.post('/emoji/:emoji', bodyParser.raw({
 			return;
 		}
 
-		const redisClient = createRedisClient(redisConnectionOptions);
 		const emoji = await redisClient.get(name);
 		if (emoji) {
 			res.status(400).send('emoji already exists');
@@ -63,7 +63,6 @@ emojiRouter.delete('/emoji/:emoji', async (req, res) => {
 		const emojiName = req.params.emoji;
 
 		// Get the hash from redis so we have the file extension
-		const redisClient = createRedisClient(redisConnectionOptions);
 		const hash = await redisClient.hgetall(emojiName);
 
 		// delete from blob container first so it's gone, gone, gone
@@ -91,14 +90,15 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 			hash = cachedHash;
 		}
 		else {
-			const redisClient = createRedisClient(redisConnectionOptions);
 			hash = await redisClient.hgetall(emojiName);
-			nodeCache.set(emojiName, hash);
 			if (!hash) {
 				res.status(404).send('not found');
 				return;
 			}
+			nodeCache.set(emojiName, hash);
+			redisClient.quit();
 		}
+
 		extension = hash["extension"];
 		if (extension === 'jpg') extension = 'jpeg';
 		imageData = hash.data;
@@ -116,7 +116,6 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 
 emojiRouter.get('/emojis', async (_, res) => {
 	try {
-		const redisClient = createRedisClient(redisConnectionOptions);
 		res.send(await redisClient.keys('*'));
 	} catch (err) {
 		res.status(500).send('Error ' + err);
@@ -148,32 +147,31 @@ async function streamToBuffer(readableStream: NodeJS.ReadableStream) {
 
 emojiRouter.post('/init', async (_, res) => {
 	try {
-	const redisClient = createRedisClient(redisConnectionOptions);
-	// Sentinel emoji - if it's there, we are assuming they're all there
-	const hash = await redisClient.hgetall('slackbot');
+		// Sentinel emoji - if it's there, we are assuming they're all there
+		const hash = await redisClient.hgetall('slackbot');
 
-	// If redis is empty, load it up with all the emojis from storage
-	if (!hash) {
-		let createdBlobs: string[] = [];
-		for await (const blob of containerClient.listBlobsFlat()) {
-			createdBlobs.push(blob.name);
+		// If redis is empty, load it up with all the emojis from storage
+		if (!hash) {
+			let createdBlobs: string[] = [];
+			for await (const blob of containerClient.listBlobsFlat()) {
+				createdBlobs.push(blob.name);
 
-			const { name, extension } = nameParts(blob.name)
+				const { name, extension } = nameParts(blob.name)
 
-			const blobClient = containerClient.getBlobClient(blob.name);
-			const downloadBlockBlobResponse = await blobClient.download();
-			const hexData = (
-				await streamToBuffer(downloadBlockBlobResponse.readableStreamBody)
-			).toString('hex');
+				const blobClient = containerClient.getBlobClient(blob.name);
+				const downloadBlockBlobResponse = await blobClient.download();
+				const hexData = (
+					await streamToBuffer(downloadBlockBlobResponse.readableStreamBody)
+				).toString('hex');
 
-			console.log('/init loading: ', blob.name)
-			
-			await redisClient.hmset(name, ['extension', extension], ['data', hexData]);
+				console.log('/init loading: ', blob.name)
+
+				await redisClient.hmset(name, ['extension', extension], ['data', hexData]);
+			}
+			res.status(201).send(createdBlobs);
+		} else {
+			res.sendStatus(304);
 		}
-		res.status(201).send(createdBlobs);
-	} else {
-		res.sendStatus(304);
-	}		
 	} catch (err) {
 		res.status(500).send('Error ' + err)
 	}
