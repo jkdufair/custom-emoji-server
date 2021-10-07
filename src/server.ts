@@ -8,11 +8,11 @@ const app = express();
 
 app.get('/', (_, res) => res.send('Hello Emoji Users!!'));
 
-app.use(basicAuth({
-	users: {
-		'emoji': process.env.EMOJI_USER_PASSWORD
-	}
-}));
+// app.use(basicAuth({
+// 	users: {
+// 		'emoji': process.env.EMOJI_USER_PASSWORD
+// 	}
+// }));
 
 app.use('/', emojiRouter);
 
