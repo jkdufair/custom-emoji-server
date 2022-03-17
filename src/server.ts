@@ -15,6 +15,9 @@ app.get('/', (_, res) => res.send('Hello Emoji Users!!'));
 
 app.use('/', emojiRouter);
 
-app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+app.listen(PORT, async () => {
+	console.log(`Listening on ${PORT}`);
+	await init()
+});
 
 //init()
