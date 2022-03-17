@@ -17,4 +17,4 @@ app.use('/', emojiRouter);
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
 
-init()
+//init()
