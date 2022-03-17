@@ -15,7 +15,6 @@ app.get('/', (_, res) => res.send('Hello Emoji Users!!'));
 
 app.use('/', emojiRouter);
 
-init().then(() => {
-	// TODO handle responses
-	app.listen(PORT, () => console.log(`Listening on ${PORT}`));	
-})
+app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+init()
