@@ -4,7 +4,7 @@
   "description": "Headless API to manage custom emojis",
   "main": "dist/server.js",
   "scripts": {
-    "build-ts": "tsc",
+    "build-ts": "node_modules/typescript/bin/tsc",
     "serve": "npm run build-ts && npm run start",
     "start": "npm run build-ts && node dist/server.js",
     "watch-node": "nodemon dist/server.js",
