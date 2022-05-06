@@ -117,7 +117,7 @@ emojiRouter.get('/emoji/:emoji', async (req, res) => {
 	try {
 		const emojiName = req.params.emoji;
 		let size = req.query.s;
-		if (size === '') {
+		if (size == null || size === '') {
 			size = 'full'
 		}		
 		const key = `${emojiName}:${size}`;
