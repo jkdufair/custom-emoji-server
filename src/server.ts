@@ -1,12 +1,23 @@
 import express from 'express';
-
-import { emoticonRouter } from './emoticons';
+// import basicAuth from 'express-basic-auth';
+import { emojiRouter, init } from './emojis';
 
 const PORT = process.env.PORT || 5000;
 const app = express();
 
-app.get('/', (req, res) => res.send('Hello Emoji Users!!'));
+app.get('/', (_, res) => res.send('Hello Emoji Users!!'));
 
-app.use('/', emoticonRouter);
+// app.use(basicAuth({
+// 	users: {
+// 		'emoji': process.env.EMOJI_USER_PASSWORD
+// 	}
+// }));
 
-app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+app.use('/', emojiRouter);
+
+app.listen(PORT, async () => {
+	console.log(`Listening on ${PORT}`);
+	await init()
+});
+
+//init()

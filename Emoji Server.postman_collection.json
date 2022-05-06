@@ -1,0 +1,161 @@
+{
+	"info": {
+		"_postman_id": "3a69bca3-3cdc-4bb9-a76d-2b059af111f1",
+		"name": "Emoji Server",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/emojis",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/emojis",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"emojis"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/emoji/:emoji",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": "/Users/jase/Library/Mobile Documents/com~apple~CloudDocs/Downloads/emoji_reformatter/reformatted_emojis/2020_intensifies.gif"
+					}
+				},
+				"url": {
+					"raw": "{{server}}/emoji/2020_intensifies.gif",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"emoji",
+						"2020_intensifies.gif"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/init",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": "/Users/jase/Library/Mobile Documents/com~apple~CloudDocs/Downloads/emoji_reformatter/reformatted_emojis/2020_intensifies.gif"
+					}
+				},
+				"url": {
+					"raw": "{{server}}/init",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"init"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/emoji/:emoji",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/emoji/marge",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"emoji",
+						"marge"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/emoji-blobs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/emoji-blobs",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"emoji-blobs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/emoji/:emoji",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/emoji/2020_intensifies",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"emoji",
+						"2020_intensifies"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{emoji_user_password}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "emoji",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
