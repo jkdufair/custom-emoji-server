@@ -15,6 +15,8 @@ const containerClient24 = blobServiceClient.getContainerClient('emojis24');
 const containerClient36 = blobServiceClient.getContainerClient('emojis36');
 // 48px high blobs
 const containerClient48 = blobServiceClient.getContainerClient('emojis48');
+// full size blobs
+const containerClient = blobServiceClient.getContainerClient('emojis');
 const nodeCache = new NodeCache();
 const redisClient = createRedisClient(redisConnectionOptions);
 
@@ -114,9 +116,9 @@ emojiRouter.delete('/emoji/:emoji', async (req, res) => {
 emojiRouter.get('/emoji/:emoji', async (req, res) => {
 	try {
 		const emojiName = req.params.emoji;
-		const size = req.query.s;
+		let size = req.query.s;
 		if (size === '') {
-			res.status(500).send('Size (s) query param required (24, 36, 48)');
+			size = 'full'
 		}		
 		const key = `${emojiName}:${size}`;
 
@@ -229,6 +231,19 @@ export const init = async () => {
 				console.log('/init loading 48x48: ', blob.name)
 
 				await redisClient.hmset(`${name}:48`, ['extension', extension], ['data', hexData]);
+			}
+			for await (const blob of containerClient.listBlobsFlat()) {
+				const { name, extension } = nameParts(blob.name)
+
+				const blobClient = containerClient.getBlobClient(blob.name);
+				const downloadBlockBlobResponse = await blobClient.download();
+				const hexData = (
+					await streamToBuffer(downloadBlockBlobResponse.readableStreamBody)
+				).toString('hex');
+
+				console.log('/init loading full size: ', blob.name)
+
+				await redisClient.hmset(`${name}:full`, ['extension', extension], ['data', hexData]);
 			}
 			return {
 				status: 201,
